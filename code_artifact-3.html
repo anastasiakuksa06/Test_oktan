@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Аудит-тестирование главных бухгалтеров</title>
+  <style>
+    /* Дизайнерские переменные в строгом бизнес-стиле */
+    :root {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --primary: #1e293b;
+      --primary-hover: #0f172a;
+      --accent: #2563eb;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --border: #cbd5e1;
+      --error: #991b1b;
+      --error-bg: #fef2f2;
+      --option-bg: #f1f5f9;
+      --option-border: #e2e8f0;
+      --option-selected-bg: #e2e8f0;
+      --option-selected-border: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Защита от выделения и копирования текста */
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .quiz-container {
+      background-color: var(--bg-card);
+      width: 100%;
+      max-width: 720px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+      padding: 40px;
+      transition: all 0.3s ease;
+    }
+
+    @media (max-width: 640px) {
+      .quiz-container {
+        padding: 24px 16px;
+      }
+    }
+
+    .quiz-screen {
+      display: none;
+    }
+
+    .quiz-screen.active {
+      display: block;
+    }
+
+    .screen-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .screen-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    /* Поля ввода и формы */
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 15px;
+      color: var(--text-main);
+      background-color: #ffffff;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-group input:disabled {
+      background-color: #f1f5f9;
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      color: var(--error);
+      font-size: 13px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    /* Кнопки */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      position: relative;
+    }
+
+    .btn-block {
+      display: flex;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: #ffffff;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background-color: var(--success-hover);
+    }
+
+    .btn:disabled {
+      background-color: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* Фиксированная шапка теста */
+    .quiz-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    .user-name-badge {
+      font-size: 13px;
+      font-weight: 600;
+      background-color: #f1f5f9;
+      padding: 4px 12px;
+      border-radius: 20px;
+      max-width: 70%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    .progress-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .progress-text {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background-color: #f1f5f9;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background-color: var(--primary);
+      transition: width 0.3s ease;
+    }
+
+    /* Блок вопроса */
+    .question-meta {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .question-title {
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 24px;
+    }
+
+    /* Список ответов */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      background-color: var(--option-bg);
+      border: 1px solid var(--option-border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-item:hover {
+      background-color: var(--option-selected-bg);
+    }
+
+    .option-item.selected {
+      background-color: var(--option-selected-bg);
+      border-color: var(--option-selected-border);
+      box-shadow: inset 0 0 0 1px var(--option-selected-border);
+    }
+
+    .option-item input[type="radio"],
+    .option-item input[type="checkbox"] {
+      margin-top: 3px;
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+
+    .option-text {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .quiz-footer {
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    /* Финал */
+    .final-status-icon {
+      width: 56px;
+      height: 56px;
+      background-color: #dcfce7;
+      color: var(--success);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background-color: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 15px;
+    }
+
+    .summary-label {
+      color: var(--text-muted);
+    }
+
+    .summary-value {
+      font-weight: 700;
+    }
+
+    /* Спиннер загрузки */
+    .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.8s linear infinite;
+      position: absolute;
+      right: 24px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .btn.loading .btn-text {
+      visibility: hidden;
+    }
+
+    .btn.loading .spinner {
+      display: block;
+    }
+
+    .server-status {
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .server-status.success {
+      display: block;
+      background-color: #dcfce7;
+      color: var(--success-hover);
+    }
+
+    .server-status.error {
+      display: block;
+      background-color: var(--error-bg);
+      color: var(--error);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="quiz-container">
+    
+    <!-- ЭКРАН 1: ВХОД В СИСТЕМУ -->
+    <div id="screen-auth" class="quiz-screen active">
+      <h2 class="screen-title">Вход в систему тестирования</h2>
+      <p class="screen-subtitle">пожалуйста, заполните ваши идентификационные данные перед началом теста.</p>
+      
+      <form id="auth-form" novalidate>
+        <div class="form-group">
+          <label for="user-fio">ФИО полностью</label>
+          <input type="text" id="user-fio" placeholder="Иванов Иван Иванович" autocomplete="off" required>
+          <div id="fio-error" class="error-message">введите, пожалуйста, ваши фамилию и имя (минимум два слова).</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="test-date">Дата прохождения</label>
+          <input type="text" id="test-date" readonly disabled>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block">Начать тест</button>
+      </form>
+    </div>
+
+    <!-- ЭКРАН 2: ИНТЕРФЕЙС ТЕСТА -->
+    <div id="screen-quiz" class="quiz-screen">
+      <div class="quiz-header">
+        <div class="header-top">
+          <span id="header-fio" class="user-name-badge">загрузка...</span>
+          <div class="timer-box">
+            <span class="timer-icon">⏱</span>
+            <span id="quiz-timer">00:00</span>
+          </div>
+        </div>
+        <div class="progress-container">
+          <div class="progress-text">вопрос <span id="current-question-num">1</span> из <span id="total-questions-num">20</span></div>
+          <div class="progress-bar-bg">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-body">
+        <div id="question-block-info" class="question-meta">блок: загрузка | сложность: загрузка</div>
+        <h3 id="question-text" class="question-title">загрузка вопроса...</h3>
+        <div id="options-container" class="options-list"></div>
+      </div>
+
+      <div class="quiz-footer">
+        <button id="btn-next" class="btn btn-primary" disabled>Далее</button>
+      </div>
+    </div>
+
+    <!-- ЭКРАН 3: ФИНАЛ -->
+    <div id="screen-final" class="quiz-screen">
+      <div class="final-status-icon">✓</div>
+      <h2 class="screen-title">Вы успешно прошли тестирование!</h2>
+      <p class="screen-subtitle">все ответы успешно зафиксированы системой. Пожалуйста, отправьте результаты для финальной проверки экспертом.</p>
+      
+      <div class="summary-card">
+        <div class="summary-item">
+          <span class="summary-label">затраченное время:</span>
+          <span id="final-time-text" class="summary-value">00:00</span>
+        </div>
+      </div>
+
+      <button id="btn-submit-expert" class="btn btn-success btn-block">
+        <span class="btn-text">Отправить результаты на экспертизу</span>
+        <span class="spinner"></span>
+      </button>
+      
+      <div id="server-status-message" class="server-status"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // Конфигурационный эндпоинт отправки
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU3gk2Hp3E0vKjbTUjXiDgbyB4ITD4zIZZtdwLIto9SuJnL25SwIH1RKLZRnQLNnaCTA/exec";
+
+    // База данных вопросов тестирования
+    const questions = [
+      {
+        "id": 1,
+        "block": "OSNO",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "В какой момент организации на ОСНО следует признавать в целях налогообложения прибыли расходы на оплату труда в виде премий по итогам работы за год, если приказ о выплате подписан в январе следующего года, а выплата произведена в феврале?",
+        "options": [
+          "в декабре отчетного года, к которому относится премия, так как применяется метод начисления",
+          "в январе года выплаты, то есть в периоде подписания приказа и начисления премии",
+          "в феврале года выплаты, то есть в периоде фактического перечисления денежных средств сотрудникам",
+          "равномерно в течение всего отчетного года, к которому относится данная премия"
+        ],
+        "correctAnswer": [1],
+        "rationale": "согласно методу начисления расходы на оплату труда признаются в качестве расхода ежемесячно исходя из суммы начисленных расходов (пункт 4 статьи 272 НК РФ). До момента подписания приказа руководства у организации нет правовых оснований для начисления премии, следовательно, расход признается в периоде издания приказа, то есть в январе."
+      },
+      {
+        "id": 2,
+        "block": "OSNO",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "Каким образом при использовании балансового метода отражается в бухгалтерском учете начисление резерва по сомнительным долгам, если в налоговом учете данный резерв организацией не создается?",
+        "options": [
+          "формируется отложенный налоговый актив (ОНА)",
+          "формируется отложенное налоговое обязательство (ОНО)",
+          "формируется постоянное налоговое обязательство (ПНО)",
+          "никаких разниц не возникает, так как резерв влияет только на бухгалтерский учет"
+        ],
+        "correctAnswer": [0],
+        "rationale": "создание резерва в бухгалтерском учете уменьшает балансовую стоимость дебиторской задолженности, при этом налоговая стоимость не меняется. Возникает вычитаемая временная разница (ВВР), которая приводит к образованию отложенного налогового актива (ОНА) в соответствии с положениями ПБУ 18/02."
+      },
+      {
+        "id": 3,
+        "block": "OSNO",
+        "difficulty": "medium",
+        "type": "multiple",
+        "questionText": "Какие из перечисленных видов расходов налогоплательщик на ОСНО имеет право безоговорочно отнести к косвенным расходам текущего отчетного (налогового) периода?",
+        "options": [
+          "расходы на аренду офиса административно-управленческого персонала",
+          "затраты на сырье и материалы, составляющие основу изготовленной продукции",
+          "суммы начисленной амортизации по нематериальным активам производственного назначения",
+          "затраты на оплату услуг сторонних организаций по охране производственного комплекса"
+        ],
+        "correctAnswer": [0, 2, 3],
+        "rationale": "налогоплательщик самостоятельно определяет перечень прямых расходов согласно статье 318 НК РФ, однако сырье (основа продукции) традиционно относится к прямым. Амортизация НМА, аренда офиса АУП и услуги охраны не связаны напрямую с технологическим процессом изготовления конкретной единицы продукции и обоснованно признаются косвенными."
+      },
+      {
+        "id": 4,
+        "block": "OSNO",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "Организация применяется балансовый метод согласно ПБУ 18/02. В отчетном периоде законодательно изменилась ставка налога на прибыль. Каков порядок пересчета ранее признанных отложенных налоговых активов (ОНА) и обязательств (ОНО)?",
+        "options": [
+          "ОНА и ОНО не пересчитываются, новая ставка применяется только к разницам текущего периода",
+          "ОНА и ОНО подлежат пересчету на дату изменения ставки или отчетную дату, а величина изменения относится на финансовый результат (счет 99)",
+          "изменение величины ОНА и ОНО отражается непосредственно в капитале организации (счет 84)",
+          "пересчет производится исключительно в пояснениях к бухгалтерскому балансу без проводок"
+        ],
+        "correctAnswer": [1],
+        "rationale": "в соответствии с пунктами 14 и 15 ПБУ 18/02 в случае изменения ставок налога на прибыль величина отложенных налоговых активов и обязательств подлежит пересчету с отнесением возникающей разницы на счет учета прибылей и убытков (финансовый результат текущего периода)."
+      },
+      {
+        "id": 5,
+        "block": "OSNO",
+        "difficulty": "hardcore",
+        "type": "single",
+        "questionText": "Организация провела работы по замене изношенных несущих конструкций производственного здания без изменения его производственной мощности и назначения, однако стоимость работ превысила лимит капвложений. Минфин требует капитализации, но существует устойчивая судебная практика. Как квалифицировать расход?",
+        "options": [
+          "капитализировать как модернизацию в соответствии с ФСБУ 6/2020 и статьей 257 НК РФ",
+          "единовременно списать как ремонтные работы в налоговом учете, руководствуясь статьей 260 НК РФ и позицией судов о сохранении технико-экономических показателей",
+          "отнести на расходы будущих периодов (счет 97) и списывать в течение срока полезного использования здания",
+          "признать модернизацией в бухгалтерском учете и ремонтом в налоговом учете"
+        ],
+        "correctAnswer": [1],
+        "rationale": "замена изношенных элементов без изменения характеристик объекта признается ремонтом независимо от стоимости работ (статья 260 НК РФ). Позиция Минфина часто фискальна, но суды поддерживают налогоплательщиков, если не изменились назначение и мощность."
+      },
+      {
+        "id": 6,
+        "block": "NDS",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "В какой максимальный срок налогоплательщик имеет право заявить к вычету суммы НДС, предъявленные поставщиком при приобретении оборудования, требующего монтажа?",
+        "options": [
+          "в течение трех лет после принятия оборудования на забалансовый учет",
+          "в течение трех лет после принятия оборудования к учету на счет 07 «Оборудование к установке»",
+          "в течение трех лет с момента ввода оборудования в эксплуатацию и перевода на счет 01",
+          "строго в том налоговом периоде, в котором получен счет-фактура от поставщика"
+        ],
+        "correctAnswer": [1],
+        "rationale": "право на вычет НДС по оборудованию, требующему монтажа, возникает после принятия его на учет на счет 07. Согласно пункту 1.1 статьи 172 НК РФ налоговые вычеты могут быть заявлены в пределах трех лет после принятия на учет таких товаров."
+      },
+      {
+        "id": 7,
+        "block": "NDS",
+        "difficulty": "medium",
+        "type": "multiple",
+        "questionText": "В каких из перечисленных случаев налогоплательщик обязан восстановить суммы НДС, ранее правомерно принятые к вычету?",
+        "options": [
+          "при переходе организации с общего режима налогообложения (ОСНО) на упрощенную систему (УСН)",
+          "при передаче имущества в качестве вклада в уставный капитал другой организации",
+          "при списании основных средств в связи с их полным физическим износом до истечения срока полезного использования",
+          "при получении из федерального бюджета субсидий на возмещение затрат по оплате приобретенных товаров"
+        ],
+        "correctAnswer": [0, 1, 3],
+        "rationale": "обязанность восстановления НДС регламентирована пунктом 3 статьи 170 НК РФ. Переход на УСН, вклад в уставный капитал и получение субсидий на возмещение затрат прямо указаны в законе. Списание ОС в связи с износом не является основанием для восстановления НДС (письма Минфина и позиция ВАС РФ)."
+      },
+      {
+        "id": 8,
+        "block": "NDS",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "В течение какого срока продавец обязан выставить корректировочный счет-фактуру при изменении стоимости отгруженных товаров в сторону уменьшения в связи с предоставлением скидки?",
+        "options": [
+          "не позднее 5 календарных дней со дня составления документов, подтверждающих согласие или уведомление покупателя о признании изменений стоимости",
+          "не позднее 5 рабочих дней с даты окончания налогового периода, в котором произошла отгрузка",
+          "в день подписания соглашения о предоставлении скидки",
+          "законодательством срок для корректировочных счетов-фактур не установлен"
+        ],
+        "correctAnswer": [0],
+        "rationale": "согласно пункту 3 статьи 168 НК РФ при изменении стоимости отгруженных товаров корректировочный счет-фактура выставляется не позднее 5 календарных дней со дня составления документа, подтверждающего согласие покупателя или факт его уведомления."
+      },
+      {
+        "id": 9,
+        "block": "NDS",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "Покупатель обнаружил недопоставку товаров и согласовал с продавцом уменьшение общей стоимости партии. Каковы последствия данной операции для налогового учета покупателя по НДС?",
+        "options": [
+          "покупатель заявляет дополнительный налоговый вычет на основании акта о недопоставке",
+          "покупатель регистрирует в книге покупок исправленный счет-фактуру поставщика",
+          "покупатель не совершает никаких действий, так как корректировку отражает только продавец",
+          "покупатель обязан восстановить часть НДС на основании полученного от продавца корректировочного счета-фактуры или первичного документа на изменение стоимости"
+        ],
+        "correctAnswer": [3],
+        "rationale": "при уменьшении стоимости отгруженных товаров продавец заявляет вычет разницы (пункт 5 статьи 171 НК РФ), а покупатель обязан восстановить излишне предъявленный налог на основании корректировочного счета-фактуры или первичных документов согласно подпункту 4 пункта 3 статьи 170 НК РФ."
+      },
+      {
+        "id": 10,
+        "block": "NDS",
+        "difficulty": "hardcore",
+        "type": "single",
+        "questionText": "В результате форс-мажорных обстоятельств (пожара на складе) у организации полностью уничтожена партия ранее приобретенных товаров, НДС по которым был правомерно принят к вычету. Каковы последствия в отношении ранее заявленного вычета по НДС согласно актуальной позиции контролирующих органов и высших судов?",
+        "options": [
+          "организация обязана восстановить НДС в периоде проведения инвентаризации и списания товаров, так как они более не используются в деятельности, облагаемой НДС",
+          "НДС восстанавливать не требуется, поскольку перечень оснований для восстановления в пункте 3 статьи 170 НК РФ является исчерпывающим, а списание ценностей в результате пожара там отсутствует",
+          "налог необходимо восстановить, но только пропорционально стоимости товаров, которая не будет покрыта страховым возмещением",
+          "организация обязана начислить НДС на стоимость уничтоженных товаров как на операцию по безвозмездной передаче имущества"
+        ],
+        "correctAnswer": [1],
+        "rationale": "пункт 3 статьи 170 НК РФ содержит строго закрытый перечень ситуаций, когда налогоплательщик обязан восстановить ранее принятый к вычету НДС. Уничтожение имущества в связи с пожаром или иными чрезвычайными ситуациями в данном перечне отсутствует. Данная позиция закреплена в решении ВАС РФ от 23.10.2006 № 10652/06 и подтверждается устойчивой судебной практикой, несмотря на регулярные противоположные разъяснения Минфина."
+      },
+      {
+        "id": 11,
+        "block": "USN",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "В какой момент налогоплательщик, применяющий УСН с объектом «доходы минус расходы», имеет право включить в состав расходов стоимость приобретенных товаров, предназначенных для дальнейшей реализации?",
+        "options": [
+          "сразу после перехода права собственности на товары и их оприходования",
+          "после документального подтверждения факта оплаты товаров поставщику",
+          "по мере реализации указанных товаров конечному покупателю при условии их предварительной оплаты поставщику",
+          "после получения денежных средств от конечного покупателя за реализованные товары"
+        ],
+        "correctAnswer": [2],
+        "rationale": "в соответствии с подпунктом 2 пункта 2 статьи 346.17 НК РФ расходы по оплате стоимости товаров, приобретенных для дальнейшей реализации, учитываются по мере реализации указанных товаров. Факт оплаты поставщику при этом является обязательным условием."
+      },
+      {
+        "id": 12,
+        "block": "USN",
+        "difficulty": "multiple",
+        "questionText": "Какие из перечисленных расходов могут быть признаны налогоплательщиком на УСН 15% в КУДиР только после выполнения комплекса условий: фактического совершения затрат, их полной оплаты и выполнения специфических требований главы 26.2 НК РФ (например, ввода в эксплуатацию или реализации)?",
+        "options": [
+          "расходы на приобретение (сооружение) объектов основных средств",
+          "расходы на приобретение товаров, предназначенных для дальнейшей реализации",
+          "расходы на оплату труда и выплату пособий по временной нетрудоспособности",
+          "затраты на оплату коммунальных услуг и аренду офиса"
+        ],
+        "correctAnswer": [0, 1],
+        "rationale": "при УСН для всех расходов обязателен кассовый метод (статья 346.17 НК РФ). Однако для признания расходов на ОС (индекс 0) требуется еще и ввод в эксплуатацию (пункт 3 статьи 346.16 НК РФ), а для товаров (индекс 1) - их фактическая реализация конечному покупателю. Расходы на оплату труда и коммуналку признаются сразу по факту оплаты и оказания услуг."
+      },
+      {
+        "id": 13,
+        "block": "USN",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "Каков порядок отражения в КУДиР расходов на приобретение объекта основных средств, купленного и введенного в эксплуатацию в первом квартале отчетного года, при условии его полной оплаты в этом же квартале?",
+        "options": [
+          "вся сумма признается в расходы 31 марта отчетного года",
+          "сумма признается равными долями в последний день каждого отчетного периода в течение одного календарного года",
+          "сумма списывается равными долями ежемесячно в течение налогового периода",
+          "расход признается единовременно 31 декабря отчетного года"
+        ],
+        "correctAnswer": [1],
+        "rationale": "согласно пункту 3 статьи 346.16 НК РФ расходы на приобретение ОС, совершенные в периоде применения УСН, принимаются равными долями за отчетные периоды в течение первого календарного года применения. Отражение производится на последнее число каждого отчетного периода (31 марта, 30 июня, 30 сентября, 31 декабря)."
+      },
+      {
+        "id": 14,
+        "block": "USN",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "Имеет ли право налогоплательщик на УСН «доходы минус расходы» включить в налоговую базу сумму убытка, полученного по итогам предыдущего налогового периода?",
+        "options": [
+          "нет, убытки прошлых лет при УСН не учитываются",
+          "да, налогоплательщик вправе уменьшить налоговую базу текущего периода на сумму убытка, полученного в предыдущих налоговых периодах",
+          "да, но убыток можно зачесть только в счет уплаты минимального налога",
+          "убыток можно учесть только в течение трех лет, следующих за годом его получения"
+        ],
+        "correctAnswer": [1],
+        "rationale": "в силу пункта 7 статьи 346.18 НК РФ налогоплательщик, использующий в качестве объекта налогообложения доходы, уменьшенные на величину расходов, вправе уменьшить исчисленную по итогам налогового периода налоговую базу на сумму убытка, полученного по итогам предыдущих налоговых периодах, в течение 10 лет."
+      },
+      {
+        "id": 15,
+        "block": "USN",
+        "difficulty": "hardcore",
+        "type": "single",
+        "questionText": "Организация на УСН 15% приобретает импортный товар через российского комиссионера. Комиссионер уплатил НДС на таможне за счет средств комитента. В какой момент комитент имеет право включить сумму ввозного НДС в состав расходов в КУДиР?",
+        "options": [
+          "в момент перечисления денежных средств комиссионеру на уплату таможенного НДС",
+          "в момент утверждения отчета комиссионера об уплате налога на таможне",
+          "по мере реализации импортированных товаров конечному покупателю при условии их оплаты и утверждения отчета комиссионера",
+          "единовременно в конце квартала, в котором товар пересек границу РФ"
+        ],
+        "correctAnswer": [2],
+        "rationale": "ввозной НДС при УСН является элементом затрат, связанных с приобретением товаров (подпункт 8 пункта 1 статьи 346.16 НК РФ). Он списывается в расходы пропорционально стоимости товаров по мере их реализации конечным покупателям в соответствии с правилами подпункта 2 пункта 2 статьи 346.17 НК РФ."
+      },
+      {
+        "id": 16,
+        "block": "RETAIL",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "Какой кассовый документ обязана оформить организация в розничной торговле в конце рабочего дня на основании фискальных документов (отчетов о закрытии смены), сформированных контрольно-кассовой техникой, для отражения всей наличной выручки в главной кассе?",
+        "options": [
+          "расходный кассовый ордер по форме № КО-2 на сумму возвратов",
+          "приходный кассовый ордер по форме № КО-1 на общую сумму сданной наличной выручки",
+          "акт о возврате денежных сумм покупателям по форме № КМ-3",
+          "универсальный передаточный документ с признаком розничных продаж"
+        ],
+        "correctAnswer": [1],
+        "rationale": "на основании указания Банка России от 11.03.2014 № 3210-У приходный кассовый ордер № КО-1 может оформляться по окончании проведения кассовых операций на основании фискальных документов. Это является единственным законным способом оприходования розничной наличной выручки в кассу организации."
+      },
+      {
+        "id": 17,
+        "block": "RETAIL",
+        "difficulty": "multiple",
+        "questionText": "Какие из перечисленных документов являются обязательными для оформления розничной торговой точкой при выявлении расхождений по количеству и качеству товара в момент его приемки от стороннего поставщика?",
+        "options": [
+          "акт о приеме товара без документов по форме № ТОРГ-4",
+          "акт о установленном расхождении по количеству и качеству при приемке товарно-материальных ценностей по форме № ТОРГ-2",
+          "коммерческий акт о списании безнадежной дебиторской задолженности поставщика",
+          "претензионное письмо в адрес поставщика с приложением первичного акта"
+        ],
+        "correctAnswer": [1, 3],
+        "rationale": "при обнаружении недостачи или брака в момент приемки товаров от российского поставщика составляется акт по форме № ТОРГ-2 (или самостоятельно разработанная форма с аналогичными реквизитами). На основании данного акта юридический отдел или бухгалтерия формирует претензионное письмо поставщику."
+      },
+      {
+        "id": 18,
+        "block": "RETAIL",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "Каким образом в бухгалтерском учете розничной организации отражается выручка от продаж, если оплата от розничного покупателя получена с применением платежной карты (эквайринг), а денежные средства зачислены банком на расчетный счет на следующий рабочий день за вычетом комиссии?",
+        "options": [
+          "выручка признается в день зачисления денег на расчетный счет за вычетом комиссии банка",
+          "выручка признается в полной сумме в день совершения покупки и пробития чека с использованием промежуточного счет 57 «Переводы в пути»",
+          "сумма комиссии банка списывается непосредственно в уменьшение розничной выручки на счете 90",
+          "в день продажи проводки не формируются, учет ведется на забалансовом счете"
+        ],
+        "correctAnswer": [1],
+        "rationale": "согласно ПБУ 9/99 и главе 25 НК РФ розничная выручка признается в момент реализации товара в полной сумме, уплаченной покупателем. Так как деньги поступают позже, используется счет 57, а комиссия банка-эквайера относится к прочим (операционным) расходам на счет 91 и не уменьшает продажную стоимость товара."
+      },
+      {
+        "id": 19,
+        "block": "RETAIL",
+        "difficulty": "medium",
+        "type": "single",
+        "questionText": "Какое требование законодательства о применении ККТ является обязательным при обнаружении кассиром розничного магазина излишков наличных денег в денежном ящике ККТ, которые не были зарегистрированы через кассовый аппарат в течение смены?",
+        "options": [
+          "необходимо сформировать фискальный документ «чек коррекции» с признаком расчета «приход» для исправления данных и приходования суммы",
+          "достаточно составить бухгалтерскую справку и оприходовать деньги в конце месяца",
+          "излишки должны быть возвращены кассиру как личные средства",
+          "требуется обнулить память фискального накопителя до закрытия смены"
+        ],
+        "correctAnswer": [0],
+        "rationale": "в соответствии с Федеральным законом № 54-ФЗ при возникновении неучтенной выручки или излишков, возникших в результате ошибки кассира, организация обязана сформировать чек коррекции. Данный документ позволяет избежать административного штрафа, если оформлен до того, как налоговый орган узнал о нарушении."
+      },
+      {
+        "id": 20,
+        "block": "RETAIL",
+        "difficulty": "hardcore",
+        "type": "single",
+        "questionText": "В ходе инвентаризации на розничном складе у одного материально ответственного лица выявлена пересортица (излишек товара «А» и недостача аналогичного товара «Б» в равных количествах). Каков легитимный порядок отражения результатов согласно ФСБУ 28/2023?",
+        "options": [
+          "взаимный зачет производится автоматически, излишки и недостачи не отражаются обособленно, если совпало общее количество",
+          "зачет пересортицы допускается по решению руководства в исключительных случаях; при этом излишки приходуются по справедливой стоимости, а отрицательные ценовые разницы относятся на виновных лиц либо на финансовый результат",
+          "зачет категорически запрещен во всех случаях, активы приходуются и списываются исключительно развернуто без уменьшения сумм недостач",
+          "вся сумма недостачи без проведения расследования списывается в уменьшение чистой прибыли текущего периода"
+        ],
+        "correctAnswer": [1],
+        "rationale": "согласно ФСБУ 28/2023 зачет пересортицы возможен по решению руководства за один и тот же проверяемый период, у одного и того же МОЛ, в отношении активов одного наименования и в равных количествах. Обнаруженные излишки оцениваются по справедливой стоимости, а возникающие отрицательные ценовые разницы взыскиваются с МОЛ или списываются в прочие расходы при отсутствии его вины."
+      }
+    ];
+
+    // Глобальное состояние приложения
+    let state = {
+      fio: "",
+      date: "",
+      startTimestamp: null,
+      currentQuestionIndex: 0,
+      userAnswers: {}, // структура: { questionId: [index1, index2...] }
+      timerInterval: null,
+      totalElapsedTime: 0
+    };
+
+    // DOM-элементы экранов
+    const screens = {
+      auth: document.getElementById('screen-auth'),
+      quiz: document.getElementById('screen-quiz'),
+      final: document.getElementById('screen-final')
+    };
+
+    // Инициализация при загрузке документа
+    document.addEventListener("DOMContentLoaded", () => {
+      initCurrentDate();
+      restoreSession();
+      preventInteractions();
+    });
+
+    // Установка текущей даты
+    function initCurrentDate() {
+      const dateInput = document.getElementById('test-date');
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      dateInput.value = `${day}.${month}.${year}`;
+    }
+
+    // Запрет контекстного меню для минимизации списывания
+    function preventInteractions() {
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'u' || e.key === 'a')) {
+          e.preventDefault();
+        }
+      });
+    }
+
+    // Смена экранов (SPA)
+    function switchScreen(screenKey) {
+      Object.values(screens).forEach(screen => screen.classList.remove('active'));
+      screens[screenKey].classList.add('active');
+    }
+
+    // Логика первого экрана (вход)
+    document.getElementById('auth-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fioInput = document.getElementById('user-fio').value.trim();
+      const fioError = document.getElementById('fio-error');
+      
+      const words = fioInput.split(/\s+/).filter(word => word.length > 0);
+      if (words.length < 2) {
+        fioError.style.display = 'block';
+        return;
+      }
+      fioError.style.display = 'none';
+
+      state.fio = fioInput;
+      state.date = document.getElementById('test-date').value;
+      state.startTimestamp = Date.now();
+      state.currentQuestionIndex = 0;
+      state.userAnswers = {};
+
+      saveSession();
+      startQuiz();
+    });
+
+    // Запуск теста
+    function startQuiz() {
+      switchScreen('quiz');
+      document.getElementById('header-fio').textContent = state.fio;
+      document.getElementById('total-questions-num').textContent = questions.length;
+      
+      startTimer();
+      renderQuestion();
+    }
+
+    // Сквозной таймер (с защитой от F5)
+    function startTimer() {
+      if (state.timerInterval) clearInterval(state.timerInterval);
+      const timerElement = document.getElementById('quiz-timer');
+      
+      state.timerInterval = setInterval(() => {
+        const elapsedMs = Date.now() - state.startTimestamp;
+        state.totalElapsedTime = Math.floor(elapsedMs / 1000);
+        
+        const minutes = String(Math.floor(state.totalElapsedTime / 60)).padStart(2, '0');
+        const seconds = String(state.totalElapsedTime % 60).padStart(2, '0');
+        
+        timerElement.textContent = `${minutes}:${seconds}`;
+      }, 1000);
+    }
+
+    // Отрисовка вопроса
+    function renderQuestion() {
+      const q = questions[state.currentQuestionIndex];
+      
+      document.getElementById('current-question-num').textContent = state.currentQuestionIndex + 1;
+      const progressPercent = ((state.currentQuestionIndex) / questions.length) * 100;
+      document.getElementById('progress-bar-fill').style.width = `${progressPercent}%`;
+      
+      // Использование lowercase после двоеточия согласно требованиям
+      document.getElementById('question-block-info').textContent = `блок: ${q.block} | сложность: ${q.difficulty}`;
+      document.getElementById('question-text').textContent = q.questionText;
+      
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+      
+      const savedSelected = state.userAnswers[q.id] || [];
+      const inputType = q.type === 'single' ? 'radio' : 'checkbox';
+      
+      q.options.forEach((optionText, idx) => {
+        const optionItem = document.createElement('div');
+        optionItem.className = `option-item ${savedSelected.includes(idx) ? 'selected' : ''}`;
+        
+        const input = document.createElement('input');
+        input.type = inputType;
+        input.name = `question-${q.id}`;
+        input.value = idx;
+        input.checked = savedSelected.includes(idx);
+        
+        const label = document.createElement('span');
+        label.className = 'option-text';
+        label.textContent = optionText;
+        
+        optionItem.appendChild(input);
+        optionItem.appendChild(label);
+        
+        optionItem.addEventListener('click', (e) => {
+          if (e.target !== input) {
+            input.checked = inputType === 'radio' ? true : !input.checked;
+          }
+          handleSelection(q, idx, input.checked);
+        });
+        
+        input.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleSelection(q, idx, input.checked);
+        });
+        
+        optionsContainer.appendChild(optionItem);
+      });
+      
+      updateNavigationState();
+    }
+
+    // Выбор вариантов
+    function handleSelection(question, optionIdx, isChecked) {
+      if (!state.userAnswers[question.id]) {
+        state.userAnswers[question.id] = [];
+      }
+      
+      if (question.type === 'single') {
+        state.userAnswers[question.id] = [optionIdx];
+        const allItems = document.querySelectorAll('.option-item');
+        allItems.forEach(item => item.classList.remove('selected'));
+        event.currentTarget.closest('.option-item').classList.add('selected');
+      } else {
+        if (isChecked) {
+          if (!state.userAnswers[question.id].includes(optionIdx)) {
+            state.userAnswers[question.id].push(optionIdx);
+          }
+        } else {
+          state.userAnswers[question.id] = state.userAnswers[question.id].filter(idx => idx !== optionIdx);
+        }
+        event.currentTarget.closest('.option-item').classList.toggle('selected', isChecked);
+      }
+      
+      saveSession();
+      updateNavigationState();
+    }
+
+    // Квалификация активности кнопки "Далее"
+    function updateNavigationState() {
+      const btnNext = document.getElementById('btn-next');
+      const q = questions[state.currentQuestionIndex];
+      const selected = state.userAnswers[q.id] || [];
+      
+      btnNext.disabled = selected.length === 0;
+      
+      if (state.currentQuestionIndex === questions.length - 1) {
+        btnNext.textContent = "Завершить тест";
+      } else {
+        btnNext.textContent = "Далее";
+      }
+    }
+
+    // Обработка кнопки перехода к следующему вопросу
+    document.getElementById('btn-next').addEventListener('click', () => {
+      if (state.currentQuestionIndex < questions.length - 1) {
+        state.currentQuestionIndex++;
+        saveSession();
+        renderQuestion();
+      } else {
+        finishQuiz();
+      }
+    });
+
+    // Завершение тестирования
+    function finishQuiz() {
+      clearInterval(state.timerInterval);
+      switchScreen('final');
+      
+      const minutes = String(Math.floor(state.totalElapsedTime / 60)).padStart(2, '0');
+      const seconds = String(state.totalElapsedTime % 60).padStart(2, '0');
+      document.getElementById('final-time-text').textContent = `${minutes}:${seconds}`;
+    }
+
+    // Отправка данных на Google Apps Script
+    document.getElementById('btn-submit-expert').addEventListener('click', function() {
+      const btn = this;
+      const statusElement = document.getElementById('server-status-message');
+      
+      btn.classList.add('loading');
+      btn.disabled = true;
+      statusElement.className = 'server-status';
+      statusElement.style.display = 'none';
+
+      let score = 0;
+      let errorsSummaryArray = [];
+
+      questions.forEach(q => {
+        const userSelections = state.userAnswers[q.id] || [];
+        const correctSelections = q.correctAnswer;
+        
+        const isCorrect = userSelections.length === correctSelections.length && 
+                          userSelections.slice().sort().every((val, idx) => val === correctSelections.slice().sort()[idx]);
+        
+        if (isCorrect) {
+          score++;
+        } else {
+          const correctTextOptions = correctSelections.map(idx => `"${q.options[idx]}"`).join('; ');
+          // Использование дефиса (-) вместо тире (—) и lowercase после двоеточий
+          errorsSummaryArray.push(`• блок [${q.block}] (вопрос №${q.id}) - ошибка. Правильно: ${correctTextOptions}.\nобоснование: ${q.rationale}`);
+        }
+      });
+
+      const percentage = Math.round((score / questions.length) * 100);
+      const minStr = Math.floor(state.totalElapsedTime / 60);
+      const secStr = state.totalElapsedTime % 60;
+      const totalTimeStr = `${minStr} мин. ${secStr} сек.`;
+
+      // Итоговая JSON-структура отправки результатов
+      const payload = {
+        fio: state.fio,
+        date: state.date,
+        total_time: totalTimeStr,
+        total_score: `${score} из ${questions.length}`,
+        percentage: `${percentage}%`,
+        errors_summary: errorsSummaryArray.length > 0 ? errorsSummaryArray.join('\n\n') : "ошибок не обнаружено. Тест пройден идеально."
+      };
+
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain" // Оптимальный заголовок для бесконфликтной кросс-доменной отправки через no-cors
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        btn.classList.remove('loading');
+        statusElement.textContent = "Результаты успешно переданы на экспертизу.";
+        statusElement.className = "server-status success";
+        localStorage.removeItem('audit_accounting_quiz_session');
+      })
+      .catch(error => {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        statusElement.textContent = "произошла ошибка при отправке данных. Пожалуйста, попробуйте еще раз.";
+        statusElement.className = "server-status error";
+        console.error("error submitting results:", error);
+      });
+    });
+
+    // Сохранение сессии (защита от F5)
+    function saveSession() {
+      const sessionData = {
+        fio: state.fio,
+        date: state.date,
+        startTimestamp: state.startTimestamp,
+        currentQuestionIndex: state.currentQuestionIndex,
+        userAnswers: state.userAnswers
+      };
+      localStorage.setItem('audit_accounting_quiz_session', JSON.stringify(sessionData));
+    }
+
+    // Восстановление сессии (защита от F5)
+    function restoreSession() {
+      const savedData = localStorage.getItem('audit_accounting_quiz_session');
+      if (!savedData) return;
+
+      try {
+        const sessionData = JSON.parse(savedData);
+        state.fio = sessionData.fio;
+        state.date = sessionData.date;
+        state.startTimestamp = sessionData.startTimestamp;
+        state.currentQuestionIndex = sessionData.currentQuestionIndex;
+        state.userAnswers = sessionData.userAnswers;
+        
+        startQuiz();
+      } catch (e) {
+        console.error("error restoring session data:", e);
+        localStorage.removeItem('audit_accounting_quiz_session');
+      }
+    }
+  </script>
+</body>
+</html>
